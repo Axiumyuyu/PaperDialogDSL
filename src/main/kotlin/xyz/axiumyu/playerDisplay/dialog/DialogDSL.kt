@@ -1,113 +1,99 @@
 package xyz.axiumyu.playerDisplay.dialog
 
+import io.papermc.paper.datacomponent.DataComponentTypes
 import io.papermc.paper.dialog.Dialog
-import io.papermc.paper.dialog.DialogResponseView
-import io.papermc.paper.registry.data.dialog.ActionButton
-import io.papermc.paper.registry.data.dialog.DialogBase
 import io.papermc.paper.registry.data.dialog.DialogRegistryEntry
-import io.papermc.paper.registry.data.dialog.action.DialogAction
 import io.papermc.paper.registry.data.dialog.body.DialogBody
-import io.papermc.paper.registry.data.dialog.body.ItemDialogBody
-import io.papermc.paper.registry.data.dialog.input.DialogInput
-import io.papermc.paper.registry.data.dialog.input.SingleOptionDialogInput
-import io.papermc.paper.registry.data.dialog.input.TextDialogInput
-import io.papermc.paper.registry.data.dialog.type.ConfirmationType
-import io.papermc.paper.registry.data.dialog.type.DialogType
-import io.papermc.paper.registry.data.dialog.type.DialogType.confirmation
-import net.kyori.adventure.audience.Audience
 import net.kyori.adventure.text.Component
-import net.kyori.adventure.text.event.ClickCallback
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer
-import org.bukkit.inventory.ItemStack
+import org.bukkit.inventory.ItemType
 import xyz.axiumyu.playerDisplay.PlayerDisplay.Companion.mm
-import xyz.axiumyu.playerDisplay.dialog.dsl.DialogBaseScope
-import xyz.axiumyu.playerDisplay.dialog.dsl.MultiActionBuilder
+import xyz.axiumyu.playerDisplay.dialog.dsl.DialogRootScope
+import xyz.axiumyu.playerDisplay.dialog.dsl.UIType
+import java.time.Duration
 
-
-fun MultiAction(block: MultiActionBuilder.() -> Unit): DialogType {
-    val builder = MultiActionBuilder().apply(block)
-    return DialogType.multiAction(builder.buttons).build()
-}
+typealias BaseDialog = DialogRegistryEntry.Builder.() -> Unit
 
 fun Component.plainText() = PlainTextComponentSerializer.plainText().serialize(this)
 
-fun BuildDialog(block: DialogRegistryEntry.Builder.() -> Unit): Dialog {
-    return Dialog.create { it.empty().apply(block) }
+fun (DialogRegistryEntry.Builder.() -> Unit).build(): Dialog {
+    return Dialog.create { it.empty().apply(this) }
 }
 
-fun DialogRegistryEntry.Builder.DialogContent(title: Component, block: DialogBaseScope.() -> Unit) {
-    // 1. 初始化收集器并执行你的 DSL 闭包
-    val scope = DialogBaseScope().apply(block)
-
-    // 2. 创建原生的 Base Builder
-    val baseBuilder = DialogBase.builder(title)
-
-    // 3. 只有当列表不为空时，才将它们注入给 Paper API
-    if (scope.bodyList.isNotEmpty()) {
-        baseBuilder.body(scope.bodyList)
+fun DialogSetup(block: DialogRootScope.() -> Unit): DialogRegistryEntry.Builder.() -> Unit {
+    return {
+        // 这里的 this 是原生的 DialogRegistryEntry.Builder
+        DialogRootScope(this).block()
     }
-    if (scope.inputList.isNotEmpty()) {
-        baseBuilder.inputs(scope.inputList)
-    }
-
-    // 4. 组装并应用
-    this.base(baseBuilder.build())
-}
-
-// --- 3. 类型与按钮构建器 ---
-// 修复：签名改为返回 DialogType，并主动注入
-fun DialogRegistryEntry.Builder.DialogType(typeProvider: () -> DialogType) {
-    this.type(typeProvider())
-}
-
-
-fun Confirmation(yes: ActionButton, no: ActionButton): ConfirmationType {
-    return confirmation(yes, no)
-}
-
-fun ActionButton(label: Component, hover: Component, width: Int, action: DialogAction? = null): ActionButton {
-    return ActionButton.create(label, hover, width, action)
-}
-
-fun ActionButton(
-    label: Component,
-    hover: Component,
-    width: Int,
-    action: (view: DialogResponseView, audience: Audience) -> Unit
-): ActionButton {
-    return ActionButton.create(
-        label, hover, width, DialogAction.customClick(
-            action,
-            ClickCallback.Options.builder().lifetime(ClickCallback.DEFAULT_LIFETIME)
-                .uses(1).build()
-        )
-    )
-
 }
 
 // example
-val newDialog: DialogRegistryEntry.Builder.() -> Unit = {
+val newDialog = DialogSetup {
     DialogContent(mm.deserialize("Title")) {
-
-        NumRangeInput("test2", mm.deserialize(""), 0f to 100f)
-        BoolInput("test", mm.deserialize(""))
-        TextInput("test3", mm.deserialize(""))
+        canCloseWithEscape(true)
+        NumRangeInput("test2", mm.deserialize("<aqua>输入数字"), 0f to 100f, 0f, 1.0f, 300)
+        BoolInput("test", mm.deserialize("勾选<sprite:blocks:block/stone>"))
+        TextInput("test3", mm.deserialize("<sprite:\"minecraft:items\":item/porkchop>请输入文本"))
     }
-    DialogType {
+    DialogType(UIType.NOTICE) {
+        Button(
+            mm.deserialize("1 right"),
+            mm.deserialize("2 right"),
+            100,
+            -1,
+            Duration.ofMinutes(5)
+        ) { view, audience ->
+            val test2 = view.getFloat("test2") ?: return@Button
+            audience.sendMessage(mm.deserialize("test2: $test2"))
+        }
+    }
+}
 
-        Confirmation(
-            ActionButton(
-                mm.deserialize("1 left"),
-                mm.deserialize("2 left"),
-                100
-            ),
-            ActionButton(
-                mm.deserialize("1 right"),
-                mm.deserialize("2 right"),
-                100
-            ) { view, audience ->
-                val test2 = view.getFloat("test2") ?: return@ActionButton
-            }
-        )
+val dialog2: BaseDialog = DialogSetup {
+
+    DialogContent(mm.deserialize("title2")) {
+        val item = ItemType.DIAMOND.createItemStack(1).apply {
+            setData(DataComponentTypes.ENCHANTMENT_GLINT_OVERRIDE, true)
+        }
+        ItemDisplay(item) {
+            showDecorations(true)
+            description(DialogBody.plainMessage(mm.deserialize("123"), 20))
+        }
+        Text(mm.deserialize("this is a test text123123123"))
+
+        BoolInput("bool1", mm.deserialize("设置1"))
+        BoolInput("bool2", mm.deserialize("设置2"))
+        BoolInput("bool3", mm.deserialize("设置3"))
+    }
+
+    DialogType(UIType.MULTI_ACTION) {
+        Button(
+            mm.deserialize("get bool1"),
+            mm.deserialize("hover1"),
+            20
+        ) { view, audience ->
+            audience.sendMessage(mm.deserialize("bool1: ${view.getBoolean("bool1")}"))
+        }
+        Button(
+            mm.deserialize("get bool2"),
+            mm.deserialize("hover2"),
+            20
+        ) { view, audience ->
+            audience.sendMessage(mm.deserialize("bool2: ${view.getBoolean("bool2")}"))
+        }
+        Button(
+            mm.deserialize("get bool3"),
+            mm.deserialize("hover3"),
+            20
+        ) { view, audience ->
+            audience.sendMessage(mm.deserialize("bool1: ${view.getBoolean("bool3")}"))
+        }
+        Button(
+            mm.deserialize("get bool4"),
+            mm.deserialize("hover4"),
+            20
+        ) { view, audience ->
+            audience.sendMessage(mm.deserialize("nope"))
+        }
     }
 }

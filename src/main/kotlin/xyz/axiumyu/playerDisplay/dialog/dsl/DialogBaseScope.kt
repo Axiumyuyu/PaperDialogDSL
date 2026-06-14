@@ -1,15 +1,20 @@
 package xyz.axiumyu.playerDisplay.dialog.dsl
 
+import io.papermc.paper.registry.data.dialog.DialogBase
 import io.papermc.paper.registry.data.dialog.body.DialogBody
 import io.papermc.paper.registry.data.dialog.body.ItemDialogBody
 import io.papermc.paper.registry.data.dialog.input.DialogInput
+import io.papermc.paper.registry.data.dialog.input.NumberRangeDialogInput
 import io.papermc.paper.registry.data.dialog.input.SingleOptionDialogInput
 import io.papermc.paper.registry.data.dialog.input.TextDialogInput
 import net.kyori.adventure.text.Component
 import org.bukkit.inventory.ItemStack
 import xyz.axiumyu.playerDisplay.dialog.plainText
 
-class DialogBaseScope {
+@PaperDialogDsl
+class DialogBaseScope(
+    private val nativeBuilder: DialogBase.Builder
+) : DialogBase.Builder by nativeBuilder {
     val inputList = mutableListOf<DialogInput>()
     val bodyList = mutableListOf<DialogBody>() // 这里的 DialogBody 是 Paper 原生的接口
 
@@ -71,11 +76,11 @@ class DialogBaseScope {
 
     fun NumRangeInput(
         id: String,
-        width: Int,
         name: Component,
         range: Pair<Float, Float>,
         init: Float,
-        step: Float
+        step: Float,
+        width: Int
     ) {
         inputList.add(
             DialogInput.numberRange(
