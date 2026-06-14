@@ -1,23 +1,17 @@
-package xyz.axiumyu.playerDisplay.dialog.dsl
+package xyz.axiumyu.paperDialogDsl.dialog.dsl
 
 import io.papermc.paper.dialog.*
 import io.papermc.paper.registry.data.dialog.ActionButton
-import io.papermc.paper.registry.data.dialog.DialogRegistryEntry
 import io.papermc.paper.registry.data.dialog.action.DialogAction
-import io.papermc.paper.registry.data.dialog.type.DialogType
-import io.papermc.paper.registry.set.RegistrySet
 import net.kyori.adventure.audience.Audience
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.event.ClickCallback
 import java.time.Duration
 
-
-
 enum class UIType {
     NOTICE, CONFIRMATION, MULTI_ACTION, DIALOG_LIST, SERVER_LINKS
 }
 
-// --- 2. Type 专属作用域 (打上之前的 Marker，防止越权调用) ---
 @PaperDialogDsl
 class DialogTypeScope {
     val buttons = mutableListOf<ActionButton>()

@@ -1,4 +1,4 @@
-package xyz.axiumyu.playerDisplay.dialog
+package xyz.axiumyu.paperDialogDsl.dialog
 
 import io.papermc.paper.datacomponent.DataComponentTypes
 import io.papermc.paper.dialog.Dialog
@@ -7,9 +7,9 @@ import io.papermc.paper.registry.data.dialog.body.DialogBody
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer
 import org.bukkit.inventory.ItemType
-import xyz.axiumyu.playerDisplay.PlayerDisplay.Companion.mm
-import xyz.axiumyu.playerDisplay.dialog.dsl.DialogRootScope
-import xyz.axiumyu.playerDisplay.dialog.dsl.UIType
+import xyz.axiumyu.paperDialogDsl.PaperDialogDSL.Companion.mm
+import xyz.axiumyu.paperDialogDsl.dialog.dsl.DialogRootScope
+import xyz.axiumyu.paperDialogDsl.dialog.dsl.UIType
 import java.time.Duration
 
 typealias BaseDialog = DialogRegistryEntry.Builder.() -> Unit
@@ -49,11 +49,14 @@ val newDialog = DialogSetup {
     }
 }
 
+// use .build() to turn this to a dialog that can be opened.
+//val dialog1 = newDialog.build()
+
 val dialog2: BaseDialog = DialogSetup {
 
     DialogContent(mm.deserialize("title2")) {
 
-        // https://github.com/PaperMC/Paper/issues/13555
+        // if uncomment these lines, you can not register it in bootstrap. See https://github.com/PaperMC/Paper/issues/13555
 /*        val item = ItemType.DIAMOND.createItemStack(1).apply {
             setData(DataComponentTypes.ENCHANTMENT_GLINT_OVERRIDE, true)
         }
@@ -61,6 +64,7 @@ val dialog2: BaseDialog = DialogSetup {
             showDecorations(true)
             description(DialogBody.plainMessage(mm.deserialize("123"), 20))
         }*/
+
         Text(mm.deserialize("this is a test text123123123"))
 
         BoolInput("bool1", mm.deserialize("设置1"))

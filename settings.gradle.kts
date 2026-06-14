@@ -1,1 +1,1 @@
-rootProject.name = "PlayerDisplay"
+rootProject.name = "PaperDialogDSL"

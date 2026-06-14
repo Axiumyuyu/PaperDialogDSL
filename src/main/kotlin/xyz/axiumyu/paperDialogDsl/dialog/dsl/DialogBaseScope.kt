@@ -1,17 +1,17 @@
-package xyz.axiumyu.playerDisplay.dialog.dsl
+package xyz.axiumyu.paperDialogDsl.dialog.dsl
 
 import io.papermc.paper.registry.data.dialog.DialogBase
 import io.papermc.paper.registry.data.dialog.body.DialogBody
 import io.papermc.paper.registry.data.dialog.body.ItemDialogBody
 import io.papermc.paper.registry.data.dialog.input.DialogInput
-import io.papermc.paper.registry.data.dialog.input.NumberRangeDialogInput
 import io.papermc.paper.registry.data.dialog.input.SingleOptionDialogInput
 import io.papermc.paper.registry.data.dialog.input.TextDialogInput
 import net.kyori.adventure.text.Component
 import org.bukkit.inventory.ItemStack
-import xyz.axiumyu.playerDisplay.dialog.plainText
+import xyz.axiumyu.paperDialogDsl.dialog.plainText
 
 @PaperDialogDsl
+@SuppressWarnings("UnstableApiUsage")
 class DialogBaseScope(
     private val nativeBuilder: DialogBase.Builder
 ) : DialogBase.Builder by nativeBuilder {
@@ -32,7 +32,6 @@ class DialogBaseScope(
     }
 
     // 物品展示 (方式 A：使用 Lambda 进一步配置 Builder，适合需要灵活控制时)
-    // 假定原生的接口为 io.papermc.paper.registry.data.dialog.body.ItemDialogBody
     fun ItemDisplay(item: ItemStack, block: ItemDialogBody.Builder.() -> Unit = {}) {
         val builder = DialogBody.item(item)
         builder.apply(block)

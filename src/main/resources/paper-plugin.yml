@@ -1,7 +1,7 @@
-name: PlayerDisplay
+name: PaperDialogDSL
 version: '${version}'
-main: xyz.axiumyu.playerDisplay.PlayerDisplay
-bootstrapper: xyz.axiumyu.playerDisplay.PlayerDisplayBootstrap
-loader: xyz.axiumyu.playerDisplay.PlayerDisplayLoader
+main: xyz.axiumyu.paperDialogDsl.PaperDialogDSL
+bootstrapper: xyz.axiumyu.paperDialogDsl.PaperDialogDSLBootstrap
+loader: xyz.axiumyu.paperDialogDsl.PaperDialogDSLLoader
 api-version: '1.21.11'
 load: POSTWORLD

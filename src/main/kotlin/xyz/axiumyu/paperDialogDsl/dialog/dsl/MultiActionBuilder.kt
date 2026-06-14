@@ -1,4 +1,4 @@
-package xyz.axiumyu.playerDisplay.dialog.dsl
+package xyz.axiumyu.paperDialogDsl.dialog.dsl
 
 import io.papermc.paper.dialog.DialogResponseView
 import io.papermc.paper.registry.data.dialog.ActionButton

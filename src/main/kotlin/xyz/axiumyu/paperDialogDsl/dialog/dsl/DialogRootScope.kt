@@ -1,4 +1,4 @@
-package xyz.axiumyu.playerDisplay.dialog.dsl
+package xyz.axiumyu.paperDialogDsl.dialog.dsl
 
 import io.papermc.paper.dialog.Dialog
 import io.papermc.paper.registry.data.dialog.DialogBase
@@ -74,7 +74,6 @@ class DialogRootScope(private val entryBuilder: DialogRegistryEntry.Builder) {
         this.type(paperType)
     }*/
 
-    // 变成成员函数，去掉之前的 DialogRegistryEntry.Builder.
     fun DialogContent(title: Component, block: DialogBaseScope.() -> Unit) {
         // 为了避免变量名冲突，把原生的 base builder 改名叫 baseBuilder
         val baseBuilder = DialogBase.builder(title)

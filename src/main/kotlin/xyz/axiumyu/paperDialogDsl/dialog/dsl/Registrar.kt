@@ -1,12 +1,11 @@
-package xyz.axiumyu.playerDisplay.dialog.dsl
+package xyz.axiumyu.paperDialogDsl.dialog.dsl
 
 import io.papermc.paper.plugin.bootstrap.BootstrapContext
 import io.papermc.paper.plugin.lifecycle.event.LifecycleEventManager
-import io.papermc.paper.registry.data.dialog.DialogRegistryEntry
 import io.papermc.paper.registry.event.RegistryEvents
 import io.papermc.paper.registry.keys.DialogKeys
 import org.bukkit.NamespacedKey
-import xyz.axiumyu.playerDisplay.dialog.BaseDialog
+import xyz.axiumyu.paperDialogDsl.dialog.BaseDialog
 
 fun LifecycleEventManager<BootstrapContext>.registerDialog(
     namespacedKey: NamespacedKey,
