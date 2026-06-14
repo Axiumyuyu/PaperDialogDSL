@@ -52,13 +52,15 @@ val newDialog = DialogSetup {
 val dialog2: BaseDialog = DialogSetup {
 
     DialogContent(mm.deserialize("title2")) {
-        val item = ItemType.DIAMOND.createItemStack(1).apply {
+
+        // https://github.com/PaperMC/Paper/issues/13555
+/*        val item = ItemType.DIAMOND.createItemStack(1).apply {
             setData(DataComponentTypes.ENCHANTMENT_GLINT_OVERRIDE, true)
         }
         ItemDisplay(item) {
             showDecorations(true)
             description(DialogBody.plainMessage(mm.deserialize("123"), 20))
-        }
+        }*/
         Text(mm.deserialize("this is a test text123123123"))
 
         BoolInput("bool1", mm.deserialize("设置1"))
