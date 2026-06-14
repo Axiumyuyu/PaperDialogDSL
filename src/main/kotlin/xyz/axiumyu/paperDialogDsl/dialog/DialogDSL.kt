@@ -6,7 +6,6 @@ import io.papermc.paper.registry.data.dialog.DialogRegistryEntry
 import io.papermc.paper.registry.data.dialog.body.DialogBody
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer
-import org.bukkit.inventory.ItemType
 import xyz.axiumyu.paperDialogDsl.PaperDialogDSL.Companion.mm
 import xyz.axiumyu.paperDialogDsl.dialog.dsl.DialogRootScope
 import xyz.axiumyu.paperDialogDsl.dialog.dsl.UIType
@@ -28,7 +27,7 @@ fun DialogSetup(block: DialogRootScope.() -> Unit): DialogRegistryEntry.Builder.
 }
 
 // example
-val newDialog = DialogSetup {
+/*val newDialog = DialogSetup {
     DialogContent(mm.deserialize("Title")) {
         canCloseWithEscape(true)
         NumRangeInput("test2", mm.deserialize("<aqua>输入数字"), 0f to 100f, 0f, 1.0f, 300)
@@ -47,23 +46,26 @@ val newDialog = DialogSetup {
             audience.sendMessage(mm.deserialize("test2: $test2"))
         }
     }
-}
+}*/
 
 // use .build() to turn this to a dialog that can be opened.
 //val dialog1 = newDialog.build()
+/*
 
 val dialog2: BaseDialog = DialogSetup {
 
     DialogContent(mm.deserialize("title2")) {
 
         // if uncomment these lines, you can not register it in bootstrap. See https://github.com/PaperMC/Paper/issues/13555
+*/
 /*        val item = ItemType.DIAMOND.createItemStack(1).apply {
             setData(DataComponentTypes.ENCHANTMENT_GLINT_OVERRIDE, true)
         }
         ItemDisplay(item) {
             showDecorations(true)
             description(DialogBody.plainMessage(mm.deserialize("123"), 20))
-        }*/
+        }*//*
+
 
         Text(mm.deserialize("this is a test text123123123"))
 
@@ -103,3 +105,4 @@ val dialog2: BaseDialog = DialogSetup {
         }
     }
 }
+*/
