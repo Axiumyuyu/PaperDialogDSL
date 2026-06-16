@@ -21,7 +21,7 @@ sourceSets {
         kotlin {
             // 如果没有传入 -PwithTest，则排除测试相关代码
             if (!withTest) {
-                exclude("**/teststuff/**")
+                exclude("**/test/**")
                 println(">>> 编译模式：生产模式 (已排除测试代码)")
             } else {
                 println(">>> 编译模式：测试模式 (包含测试代码)")
