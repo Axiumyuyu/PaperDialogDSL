@@ -32,7 +32,7 @@ class DialogBaseScope(
     }
 
     // 物品展示 (方式 A：使用 Lambda 进一步配置 Builder，适合需要灵活控制时)
-    fun ItemDisplay(item: ItemStack, block: ItemDialogBody.Builder.() -> Unit = {}) {
+    inline fun ItemDisplay(item: ItemStack, block: ItemDialogBody.Builder.() -> Unit = {}) {
         val builder = DialogBody.item(item)
         builder.apply(block)
         bodyList.add(builder.build())
@@ -69,30 +69,8 @@ class DialogBaseScope(
     }
 
     // --- Number Range Input ---
-    fun NumRangeInput(id: String, name: Component, range: Pair<Float, Float>) {
-        inputList.add(DialogInput.numberRange(id, name, range.first, range.second).build())
-    }
-
-    fun NumRangeInput(
-        id: String,
-        name: Component,
-        range: Pair<Float, Float>,
-        init: Float,
-        step: Float,
-        width: Int
-    ) {
-        inputList.add(
-            DialogInput.numberRange(
-                id,
-                width,
-                name,
-                name.plainText(), // 确保你的 plainText() 扩展函数在作用域内
-                range.first,
-                range.second,
-                init,
-                step
-            )
-        )
+    fun NumRangeInput(id: String, name: Component, range: Pair<Float, Float>, init: Float = range.first, step: Float = 0.1f, width: Int = 150) {
+        inputList.add(DialogInput.numberRange(id, name, range.first, range.second).initial(init).width(width).step(step).build())
     }
 
     // --- Single Option Input ---
@@ -126,7 +104,7 @@ class DialogBaseScope(
         labelVisible: Boolean,
         initial: String,
         maxLength: Int,
-        multilineOptions: TextDialogInput.MultilineOptions?
+        multilineOptions: TextDialogInput.MultilineOptions? = null
     ) {
         inputList.add(
             DialogInput.text(

@@ -11,7 +11,33 @@ repositories {
 
 dependencies {
     compileOnly("io.papermc.paper:paper-api:1.21.11-R0.1-SNAPSHOT")
-    implementation("org.jetbrains.kotlin:kotlin-stdlib")
+    compileOnly("org.jetbrains.kotlin:kotlin-stdlib")
+}
+
+val withTest = project.hasProperty("addTest")
+
+sourceSets {
+    main {
+        kotlin {
+            // 如果没有传入 -PwithTest，则排除测试相关代码
+            if (!withTest) {
+                exclude("**/teststuff/**")
+                println(">>> 编译模式：生产模式 (已排除测试代码)")
+            } else {
+                println(">>> 编译模式：测试模式 (包含测试代码)")
+            }
+        }
+    }
+}
+
+tasks.named<org.gradle.jvm.tasks.Jar>("jar") {
+    if (withTest) {
+        // 只有开启了测试模式时，才添加 -test 后缀
+        archiveClassifier.set("test")
+    } else {
+        // 生产模式下，文件名不带任何 classifier
+        archiveClassifier.set("")
+    }
 }
 
 kotlin {

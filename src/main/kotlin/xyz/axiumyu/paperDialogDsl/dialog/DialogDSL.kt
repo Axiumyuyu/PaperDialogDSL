@@ -1,108 +1,42 @@
 package xyz.axiumyu.paperDialogDsl.dialog
 
-import io.papermc.paper.datacomponent.DataComponentTypes
 import io.papermc.paper.dialog.Dialog
 import io.papermc.paper.registry.data.dialog.DialogRegistryEntry
-import io.papermc.paper.registry.data.dialog.body.DialogBody
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer
-import xyz.axiumyu.paperDialogDsl.PaperDialogDSL.Companion.mm
 import xyz.axiumyu.paperDialogDsl.dialog.dsl.DialogRootScope
-import xyz.axiumyu.paperDialogDsl.dialog.dsl.UIType
-import java.time.Duration
 
-typealias BaseDialog = DialogRegistryEntry.Builder.() -> Unit
+// 1. 基础图纸接口
+sealed interface BaseDialog {
+    val buildAction: DialogRegistryEntry.Builder.() -> Unit
+}
+
+@JvmInline value class DialogBlueprint(override val buildAction: DialogRegistryEntry.Builder.() -> Unit) : BaseDialog
+@JvmInline value class AtomicDialogBlueprint(override val buildAction: DialogRegistryEntry.Builder.() -> Unit) : BaseDialog
+
+// 3. 扩展构建方法保持不变
+fun BaseDialog.build(): Dialog {
+    return Dialog.create { it.empty().apply(this.buildAction) }
+}
 
 fun Component.plainText() = PlainTextComponentSerializer.plainText().serialize(this)
 
-fun (DialogRegistryEntry.Builder.() -> Unit).build(): Dialog {
-    return Dialog.create { it.empty().apply(this) }
+inline fun DialogSetup(crossinline block: DialogRootScope.() -> Unit): BaseDialog {
+    return DialogBlueprint { DialogRootScope(this).block() }
 }
 
-fun DialogSetup(block: DialogRootScope.() -> Unit): DialogRegistryEntry.Builder.() -> Unit {
-    return {
-        // 这里的 this 是原生的 DialogRegistryEntry.Builder
-        DialogRootScope(this).block()
-    }
+/**
+ * 专为 RootRoute 准备的 DSL。
+ * 会在末尾自动注入 ExitButton。
+ */
+inline fun RootDialogSetup(crossinline block: DialogRootScope.() -> Unit): BaseDialog {
+    return DialogBlueprint { DialogRootScope(this).apply { isRoot = true }.block() }
 }
 
-// example
-/*val newDialog = DialogSetup {
-    DialogContent(mm.deserialize("Title")) {
-        canCloseWithEscape(true)
-        NumRangeInput("test2", mm.deserialize("<aqua>输入数字"), 0f to 100f, 0f, 1.0f, 300)
-        BoolInput("test", mm.deserialize("勾选<sprite:blocks:block/stone>"))
-        TextInput("test3", mm.deserialize("<sprite:\"minecraft:items\":item/porkchop>请输入文本"))
-    }
-    DialogType(UIType.NOTICE) {
-        Button(
-            mm.deserialize("1 right"),
-            mm.deserialize("2 right"),
-            100,
-            -1,
-            Duration.ofMinutes(5)
-        ) { view, audience ->
-            val test2 = view.getFloat("test2") ?: return@Button
-            audience.sendMessage(mm.deserialize("test2: $test2"))
-        }
-    }
-}*/
-
-// use .build() to turn this to a dialog that can be opened.
-//val dialog1 = newDialog.build()
-/*
-
-val dialog2: BaseDialog = DialogSetup {
-
-    DialogContent(mm.deserialize("title2")) {
-
-        // if uncomment these lines, you can not register it in bootstrap. See https://github.com/PaperMC/Paper/issues/13555
-*/
-/*        val item = ItemType.DIAMOND.createItemStack(1).apply {
-            setData(DataComponentTypes.ENCHANTMENT_GLINT_OVERRIDE, true)
-        }
-        ItemDisplay(item) {
-            showDecorations(true)
-            description(DialogBody.plainMessage(mm.deserialize("123"), 20))
-        }*//*
-
-
-        Text(mm.deserialize("this is a test text123123123"))
-
-        BoolInput("bool1", mm.deserialize("设置1"))
-        BoolInput("bool2", mm.deserialize("设置2"))
-        BoolInput("bool3", mm.deserialize("设置3"))
-    }
-
-    DialogType(UIType.MULTI_ACTION) {
-        Button(
-            mm.deserialize("get bool1"),
-            mm.deserialize("hover1"),
-            20
-        ) { view, audience ->
-            audience.sendMessage(mm.deserialize("bool1: ${view.getBoolean("bool1")}"))
-        }
-        Button(
-            mm.deserialize("get bool2"),
-            mm.deserialize("hover2"),
-            20
-        ) { view, audience ->
-            audience.sendMessage(mm.deserialize("bool2: ${view.getBoolean("bool2")}"))
-        }
-        Button(
-            mm.deserialize("get bool3"),
-            mm.deserialize("hover3"),
-            20
-        ) { view, audience ->
-            audience.sendMessage(mm.deserialize("bool1: ${view.getBoolean("bool3")}"))
-        }
-        Button(
-            mm.deserialize("get bool4"),
-            mm.deserialize("hover4"),
-            20
-        ) { view, audience ->
-            audience.sendMessage(mm.deserialize("nope"))
-        }
-    }
+/**
+ * 专为 AtomicRoute 准备的 DSL。
+ * 会自动禁用 ESC 强退。
+ */
+inline fun AtomicDialogSetup(crossinline block: DialogRootScope.() -> Unit): AtomicDialogBlueprint {
+    return AtomicDialogBlueprint { DialogRootScope(this).apply { isAtomic = true }.block() }
 }
-*/

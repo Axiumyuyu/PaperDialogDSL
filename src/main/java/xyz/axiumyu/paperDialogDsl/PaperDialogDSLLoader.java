@@ -17,7 +17,7 @@ public class PaperDialogDSLLoader implements PluginLoader {
 
         // 声明 Kotlin 标准库依赖
         resolver.addDependency(
-                new Dependency(new DefaultArtifact("org.jetbrains.kotlin:kotlin-stdlib:2.0.0"), null)
+                new Dependency(new DefaultArtifact("org.jetbrains.kotlin:kotlin-stdlib:2.4.0"), null)
         );
 
         // 声明 Maven 中央仓库
