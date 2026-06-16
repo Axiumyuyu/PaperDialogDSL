@@ -14,7 +14,7 @@ sealed interface RouteBase {
 }
 
 /**
- * 简单无状态页面，允许后退回这类页面，大多数页面应实现这个接口
+ * 简单无外部状态页面，允许后退回这类页面，大多数页面应实现这个接口
  * 默认应使用 `DialogSetup` 创建对话框
  */
 interface Route : RouteBase

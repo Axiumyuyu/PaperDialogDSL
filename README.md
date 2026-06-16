@@ -1,3 +1,5 @@
+~~Make Dialog Great Again~~
+
 ![example using this dsl](https://cdn.modrinth.com/data/cached_images/2cdf73d03b68d098f4d67825017e7d9413d2a42a.png)
 
 ![example using this dsl](https://cdn.modrinth.com/data/cached_images/083d9828beeac55b0131f7bea9ff1a0b46343c35.png)
@@ -9,9 +11,9 @@
 
 > 我实在是受够 `.build()` 了，因此产生了这个项目
 
-Paper Dialog DSL 是一个专为 Paper 1.21.10+ 实验性对话框 API (Dialog API) 打造的 Kotlin 声明式 UI 框架。它彻底消灭了繁琐的 Java Builder 嵌套、生命周期样板代码和危险的组件覆盖问题，带给你极其丝滑、类型安全的 UI 编写体验。
+Paper Dialog DSL 是一个专为 Paper 1.21.10+ 对话框 API (Dialog API) 打造的 Kotlin 声明式 UI 框架。它彻底消灭了繁琐的 Java Builder 嵌套、生命周期样板代码和危险的组件覆盖问题，带给你极其丝滑、类型安全的 UI 编写体验。
 
-查看项目源码获取更多帮助，直接拉到本地研究也可以，我不太喜欢写README,嗯
+查看项目源码及 `test` 包中的示范用法获取更多帮助，直接拉到本地研究也可以，我不太喜欢写README，嗯
 
 ## 对比
 
@@ -199,6 +201,52 @@ DSL 支持所有 Paper 原生的对话框布局：
 
 ---
 
+## 路由系统 (Route)
+
+为多页面对话框场景提供导航栈管理与生命周期安全的声明式路由方案。
+
+### 核心接口
+
+| 接口 | 何时使用 | 要点 |
+|------|----------|------|
+| `Route` | **绝大多数页面**，如列表页、详情页、表单页等 | 支持后退导航。无状态用 `object`，带参用 `data class` |
+| `RootRoute` | **模块入口/主菜单**，作为路由树的根节点 | 配合 `AutoRootSetup` 零样板生成菜单。从指令或事件入口调用 `DialogRouter.openRoot()` 启动 |
+| `AtomicRoute` | **高危操作**，如经济扣费、数据库写入、不可中断的多步事务 | 强制实现 `onRollback` 处理断线/死亡回滚；禁止 ESC 关闭；自动检测并触发事务回滚 |
+
+### 快速使用
+
+```kotlin
+// 命令/事件中打开根菜单
+DialogRouter.openRoot(player, MainMenu)
+
+// 页面内导航
+context.navigate(SomeRoute)           // 压栈跳转
+context.replace(state.copy(x = v))    // 替换当前页（更新状态重绘）
+context.goBack()                      // 返回上一页
+context.abortTransaction()            // 中断事务（自动调用 onRollback）
+```
+
+使用 `AutoRootSetup` 快速创建主菜单：
+
+```kotlin
+object MainMenu : RootRoute {
+    override fun render(context: DialogRouteContext) =
+        AutoRootSetup(context, mm.deserialize("主菜单")) {
+            "实体列表" to ListRoute
+            "编辑" to EditRoute("uuid-1234", "Pig")
+            "设置" to SettingsRoute()
+        }
+}
+```
+
+### 生命周期保护
+
+`RouteCleanUp` 自动监听玩家掉线/死亡事件。若当前页面为 `AtomicRoute`，自动触发 `onRollback` 回滚并清理路由栈，防止事务泄露。
+
+> 完整示例参考 `src/main/.../test/RouteTest.kt` 和 `RouteTest2.kt`。
+
+---
+
 ## License
 
 This project is licensed under the MIT License.
@@ -217,7 +265,7 @@ This project is licensed under the MIT License.
 
 Paper Dialog DSL is a Kotlin declarative UI framework built specifically for Paper 1.21.10+'s experimental Dialog API. It completely eliminates verbose Java Builder nesting, lifecycle boilerplate, and dangerous component override issues, giving you an extremely smooth, type-safe UI writing experience.
 
-See the source code for more help. I don't like write README, anyway.
+See the source code and examples in `test` package for more help. I don't like write README, anyway.
 
 ## Comparison
 
@@ -405,9 +453,54 @@ The DSL supports all native Paper dialog layouts:
 
 ---
 
+## Route System
+
+A declarative routing solution for multi-page dialog scenarios, providing navigation stack management and lifecycle safety.
+
+### Core Interfaces
+
+| Interface | When to Use | Key Points |
+|-----------|-------------|------------|
+| `Route` | **Most pages** — lists, details, forms, etc. | Supports back navigation. Use `object` for stateless, `data class` for parameterized pages |
+| `RootRoute` | **Module entry / main menu**, as the root of a route tree | Pair with `AutoRootSetup` for zero-boilerplate menus. Start via `DialogRouter.openRoot()` from commands or events |
+| `AtomicRoute` | **High-risk operations** — economy charges, DB writes, non-interruptible multi-step transactions | Must implement `onRollback` for disconnect/death recovery; ESC closure is disabled; auto-detected and rollback triggered on lifecycle events |
+
+### Quick Start
+
+```kotlin
+// Open a root menu from a command or event
+DialogRouter.openRoot(player, MainMenu)
+
+// In-page navigation
+context.navigate(SomeRoute)           // Push navigation (keep history)
+context.replace(state.copy(x = v))    // Replace current page (update state & re-render)
+context.goBack()                      // Go back to previous page
+context.abortTransaction()            // Abort transaction (auto-triggers onRollback)
+```
+
+Create a main menu quickly with `AutoRootSetup`:
+
+```kotlin
+object MainMenu : RootRoute {
+    override fun render(context: DialogRouteContext) =
+        AutoRootSetup(context, mm.deserialize("Main Menu")) {
+            "Entity List" to ListRoute
+            "Edit" to EditRoute("uuid-1234", "Pig")
+            "Settings" to SettingsRoute()
+        }
+}
+```
+
+### Lifecycle Protection
+
+`RouteCleanUp` automatically listens for player disconnect/death events. If the current page is an `AtomicRoute`, it triggers `onRollback` and cleans up the route stack to prevent transaction leaks.
+
+> See `src/main/.../test/RouteTest.kt` and `RouteTest2.kt` for complete examples.
+
+---
+
 ## License
 
 This project is licensed under the MIT License.
 
 </details>
-

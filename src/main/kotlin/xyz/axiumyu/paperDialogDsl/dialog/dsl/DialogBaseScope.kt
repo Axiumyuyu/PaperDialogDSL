@@ -99,11 +99,11 @@ class DialogBaseScope(
 
     fun TextInput(
         id: String,
-        width: Int,
         name: Component,
-        labelVisible: Boolean,
         initial: String,
-        maxLength: Int,
+        labelVisible: Boolean = true,
+        maxLength: Int = 1024,
+        width: Int = 150,
         multilineOptions: TextDialogInput.MultilineOptions? = null
     ) {
         inputList.add(
