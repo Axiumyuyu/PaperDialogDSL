@@ -27,7 +27,27 @@ object HomeRoute2 : RootRoute {
             Button(mm.deserialize("SettingRoute"), mm.deserialize(""), 100) { _, _ ->
                 context.navigate(SettingsRoute())
             }
+        }
+    }
+}
 
+object HomeRoute3 : RootRoute {
+    override fun render(context: DialogRouteContext) = RootDialogSetup {
+        DialogContent(mm.deserialize("主菜单")) {
+            Text(mm.deserialize("你好，${context.player.name}"))
+        }
+        DialogType(UIType.MULTI_ACTION) {
+            NavButton(context, mm.deserialize("实体列表"), mm.deserialize("点击前往"), 100,
+                ListRoute
+            )
+            NavButton(
+                context, mm.deserialize("EditRoute"), mm.deserialize("点击前往"), 100,
+                EditRoute("uuid-1234", "Pig")
+            )
+            NavButton(
+                context, mm.deserialize("SettingRoute"), mm.deserialize("点击前往"), 100,
+                SettingsRoute()
+            )
         }
     }
 }
@@ -52,9 +72,7 @@ object ListRoute : Route {
             Button(mm.deserialize("编辑这只猪"), mm.deserialize(""), 100) { _, _ ->
                 context.navigate(EditRoute("uuid-1234", "Pig"))
             }
-            Button(mm.deserialize("返回"), mm.deserialize(""), 100) { _, _ ->
-                context.goBack()
-            }
+            BackButton(context)
             ExitButton()
         }
     }
@@ -68,10 +86,8 @@ data class EditRoute(val targetId: String, val entityType: String) : Route {
         DialogContent(mm.deserialize("编辑：$entityType")) {
             Text(mm.deserialize("当前正在操作 UUID: $targetId"))
         }
-        DialogType(UIType.MULTI_ACTION) {
-            Button(mm.deserialize("返回列表"), mm.deserialize(""), 100) { _, _ ->
-                context.goBack()
-            }
+        DialogType(UIType.NOTICE) {
+            BackButton(context)
         }
     }
 }
@@ -93,22 +109,20 @@ data class SettingsRoute(
 
         DialogType(UIType.MULTI_ACTION, columns = 2) {
 
-            // 按钮 1：动态开关
+            // 按钮 1：开关
             Button(mm.deserialize("切换通知"), mm.deserialize(""), 100) { _, _ ->
                 // 使用 Kotlin 的 copy() 生成一个只有布尔值取反的新状态
                 // 然后用 replace() 替换当前路由，完成界面的“重绘”
                 context.replace(this@SettingsRoute.copy(isNotificationsEnabled = !isNotificationsEnabled))
             }
 
-            // 按钮 2：动态计数
+            // 按钮 2：计数
             Button(mm.deserialize("+1s"), mm.deserialize(""), 100) { _, _ ->
                 context.replace(this@SettingsRoute.copy(clickCount = clickCount + 1))
             }
 
             // 退出与返回
-            Button(mm.deserialize("返回主菜单"), mm.deserialize(""), 100) { _, _ ->
-                context.goBack()
-            }
+            BackButton(context)
         }
     }
 }

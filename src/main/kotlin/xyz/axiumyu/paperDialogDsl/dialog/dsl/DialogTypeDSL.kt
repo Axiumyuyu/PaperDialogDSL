@@ -9,7 +9,9 @@ import net.kyori.adventure.text.event.ClickCallback
 import org.bukkit.entity.Player
 import xyz.axiumyu.paperDialogDsl.PaperDialogDSL.Companion.mm
 import xyz.axiumyu.paperDialogDsl.route.AtomicRoute
+import xyz.axiumyu.paperDialogDsl.route.DialogRouteContext
 import xyz.axiumyu.paperDialogDsl.route.DialogRouter
+import xyz.axiumyu.paperDialogDsl.route.RouteBase
 import java.time.Duration
 
 enum class UIType {
@@ -37,8 +39,26 @@ class DialogTypeScope {
     }
 
     // 无回调的按钮
-    fun Button(label: Component, hover: Component, width: Int, init: Float, action: DialogAction? = null) {
+    fun Button(label: Component, hover: Component, width: Int, action: DialogAction? = null) {
         buttons.add(ActionButton.create(label, hover, width, action))
+    }
+
+    // 导航按钮
+    fun NavButton(context: DialogRouteContext, label: Component, hover: Component, width: Int, to: RouteBase) {
+        Button(label, hover, width) { _, _ ->
+            context.navigate(to)
+        }
+    }
+
+    fun BackButton(
+        context: DialogRouteContext,
+        label: Component = mm.deserialize("返回上一级"),
+        hover: Component = Component.empty(),
+        width: Int = 150
+    ) {
+        Button(label, hover, width) { _, _ ->
+            context.goBack()
+        }
     }
 
     // 专属的退出按钮声明
@@ -58,9 +78,9 @@ class DialogTypeScope {
                     if (currentRoute is AtomicRoute) {
                         currentRoute.onRollback(audience)
                     }
-                    
+
                     DialogRouter.clearHistory(audience)
-                     audience.closeDialog()
+                    audience.closeDialog()
                 }
             },
             // 退出按钮通常点一次就够了，配置 lifetime 为默认即可

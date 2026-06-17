@@ -4,7 +4,7 @@ import net.kyori.adventure.text.minimessage.MiniMessage
 import org.bukkit.plugin.java.JavaPlugin
 
 class PaperDialogDSL : JavaPlugin() {
-    companion object{
+    companion object {
         val mm = MiniMessage.miniMessage()
     }
 
