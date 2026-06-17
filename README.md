@@ -121,6 +121,8 @@ dependencies {
 
 ## 快速开始
 
+有一个还没写完的用法在[USAGE.md](USAGE.md)
+
 ### 1. 创建主UI
 
 使用 `DialogSetup { ... }` 块来声明一个静态的注册表对话框。框架将 UI 划分为两个区域：`DialogContent` (展示与输入区) 和 `DialogType` (底部按钮路由区)。
@@ -372,6 +374,8 @@ dependencies {
 ---
 
 ## Quick Start
+
+There's a WIP Help page at [USAGE.md](USAGE.md)
 
 ### 1. Create the main UI
 
