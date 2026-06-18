@@ -63,7 +63,7 @@ object DialogRouter {
             render(player, stack.last()) // 拿着上一页的数据重新渲染
         } else {
             clearHistory(player)
-            player.closeInventory()
+            player.closeDialog()
         }
     }
 

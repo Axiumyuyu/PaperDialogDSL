@@ -4,7 +4,7 @@
 
 > **测试源码位于 `xyz.axiumyu.paperDialogDsl.test.DialogTest`**
 
-一般对话框使用 `DialogSetup` 或者 `RootDialogSetup` 创建（用于创建 `RootRoute` 类型的路由时使用，会自动添加一个返回按钮）：
+一般对话框使用 `DialogSetup` 或者 `RootDialogSetup` 创建（用于创建 `RootRoute` 类型的路由时可使用，会自动添加一个返回按钮）：
 
 ```kotlin
 val dialog: BaseDialog = DialogSetup {
@@ -20,11 +20,10 @@ val dialog: AtomicDialogBlueprint = AtomicDialogSetup {
 }
 ```
 
-`BaseDialog` 是一个包装器，`AtomicDialogBlueprint` 是它的 `value class` ~~
-，它唯一的作用就是限制在AtomicRoute下仅允许使用该方法创建对话框~~
+`BaseDialog` 是一个包装器，`AtomicDialogBlueprint` 是它的 `value class` ~~，它唯一的作用就是限制在 AtomicRoute 下仅允许使用该方法创建对话框~~
 
-`BaseDialog` 是还未构建完成的对话框，可直接使用扩展方法注册并在 Bootstrap 阶段注册，如果需要构建为静态对话框实时展示，则需要使用
-BaseDialog.build() 方法
+`BaseDialog` 代表还未构建完成的对话框，可直接使用扩展方法在 Bootstrap 阶段注册，如果需要构建为静态对话框实时展示，则需要使用
+`BaseDialog.build()` 方法
 
 ## 对话框内容
 
@@ -36,7 +35,7 @@ BaseDialog.build() 方法
 > 
 > 动态构建和展示的对话框无此要求
 
-对话框下半部分只能设置按钮，根据对话框的类型还可以是对话框注册表列表
+**按钮只能设置在下半部分**，除了对话框列表类型的对话框，**其他对话框下半部分只能设置按钮**
 
 ### 对话框主体
 
@@ -100,4 +99,142 @@ BackButton 适合：
 
 ExitButton 必须作为退出页面的按钮，可以无参调用，它应当承载关闭页面以及处理善后工作的功能，尤其是在 `AtomicRoute` 中。
 
-~~*写累了，歇会*~~
+---
+
+按钮拥有一个回调函数，该函数传入两个参数： `DialogResponseView` 和 `Audience` ，前者用于从当前对话框状态中获取数据，后者为正在查看这个对话框的玩家（大多数时候都是玩家）
+
+```kotlin
+val dialog = DialogSetup {
+    DialogContent {
+        BoolInput("bool1", mm.deserialize("通知开关")) // 复选框 id 为 bool1
+    }
+    DialogType(UIType.NOTICE) {
+        Button(mm.deserialize("切换通知"), mm.deserialize("你好"), 100) { view, audience ->
+            val bool = view.getBoolean("bool1") // 获取在 DialogContent 中 id 为 bool1 的复选框的值
+            audience.sendMessage("$bool") // 将获取到的值发送给当前玩家
+        }
+    }
+}
+```
+
+# 路由系统
+
+类似 Vue.js / Android Navigation ，如果你不了解这是什么，我对其的理解是在一组不同的对话框之间进行方便跳转，以及传递参数的工具
+
+路由页面分为有参页面和无参页面，无参页面使用 `object` ，有参页面使用 `data class` ，参数及其类型在数据类的构造函数中定义
+
+所有路由页面都需要间接继承 `RouteBase` ，根据页面的功能不同可选择继承 `RootRoute` / `Route` / `AtomicRoute` ，并实现 `render` 方法
+
+该方法接受一个 `DialogRouteContext` ，用于后续的页面导航/跳转/返回，该方法需要返回一个 `BaseDialog` ，玩家打开该页面时渲染该对话框
+
+```kotlin
+object HomeRoute2 : RootRoute {
+    override fun render(context: DialogRouteContext): BaseDialog = RootDialogSetup {
+        DialogContent(mm.deserialize("主菜单")) {
+            Text(mm.deserialize("你好，${context.player.name}"))
+        }
+        DialogType(UIType.MULTI_ACTION) {
+            Button(mm.deserialize("<aqua>实体列表"), mm.deserialize(""), 100) { _, _ ->
+                context.navigate(ListRoute) // 当玩家点击按钮时，导航到 ListRoute 页面
+            }
+        }
+    }
+}
+```
+
+`DialogRouteContext` 拥有以下常用方法：
+
+- openRoot(Player, RouteBase)，清空玩家的返回栈，并打开一个新的页面
+- navigate(RouteBase)，向返回栈中插入当前页面，并将玩家带到新的页面
+- replace(RouteBase)，将玩家当前的页面替换为另一个页面，常用于更新当前页面
+- goBack()，将玩家带回上一个页面，若没有上一个页面，则关闭玩家的页面
+
+## 返回栈
+
+按钮中的回调函数可以将玩家带到其他对话框界面，每一次 `navigate` 都会向返回栈中增加一个路由对象（除非该对象已经存在于返回栈内），该对象包含完整的路由参数和对话框
+
+> 正如在 Android Navigation / Compose 导航中禁止向路由参数传递 Context / View 等，**禁止向路由参数中传递生命周期不受自己控制的对象，如区块，实体等等**
+> 
+> 建议尽可能只在路由参数中传递基本数据，例如 Int，String，以及只包括这些基本类型的数据结构等
+
+## 页面更新与状态绑定
+
+Minecraft 中的对话框是**不可变**的，一个对话框一旦展示给玩家，就无法再更改它的布局和内容，因此想要在对话框中更新内容，只能使用 replace 方法将当前页面替换为一个全新的页面
+
+```kotlin
+// 更新当前页面：定义页面的所有“可变状态”在主构造函数中，并设置默认值
+data class SettingsRoute(
+    val isNotificationsEnabled: Boolean = true,
+    val clickCount: Int = 0
+) : Route {
+
+    override fun render(context: DialogRouteContext) = DialogSetup {
+
+        DialogContent(mm.deserialize("what's up")) {
+            Text(mm.deserialize("当前点击次数: <aqua>$clickCount</aqua>"))
+            // 根据状态动态渲染图标
+            val statusIcon = if (isNotificationsEnabled) "<green>开启" else "<red>关闭"
+            Text(mm.deserialize("消息通知: $statusIcon"))
+
+            TextInput("msg", mm.deserialize("这个对话框中的内容会在点击按钮后丢失"), "初始值")
+        }
+
+        DialogType(UIType.MULTI_ACTION, columns = 2) {
+
+            // 按钮 1：开关
+            Button(mm.deserialize("切换通知"), mm.deserialize(""), 100) { _, _ ->
+                // 使用 Kotlin 的 copy() 生成一个只有布尔值取反的新状态
+                // 然后用 replace() 替换当前路由，完成界面的“重绘”
+                context.replace(this@SettingsRoute.copy(isNotificationsEnabled = !isNotificationsEnabled))
+            }
+
+            // 按钮 2：计数，同理
+            Button(mm.deserialize("+1s"), mm.deserialize(""), 100) { _, _ ->
+                context.replace(this@SettingsRoute.copy(clickCount = clickCount + 1))
+            }
+
+            // 退出与返回
+            BackButton(context)
+        }
+    }
+}
+```
+
+这么做存在一个问题，那些没有在 replace 方法中被传递的页面内容（例如实例中的输入框）将会丢失内容，因为它不在路由参数中，只存在于 `DialogResponseView` 中，因此按钮重绘时这些只存在于视图中的数据将丢失
+
+解决方法就是将这些数据也改为参数，并在按钮中先获取这些内容，先复制到新的路由对象中，再进行下一步修改其他值
+
+```kotlin
+data class SettingsRoute(
+    val clickCount: Int = 0,
+    val msg: String // 将输入框的内容也加入参数
+) : Route {
+    fun bind(view: DialogResponseView): SettingsRoute {
+        val text = view.getText("msg") ?: "" // 在这里先获取出输入框的内容
+        return this.copy(msg = text) // 然后发送给新的对象
+        // 如果还有其他输入框，其他对象也可以在这里处理
+    }
+
+    override fun render(context: DialogRouteContext) = DialogSetup {
+        DialogContent(mm.deserialize("what's up")) {
+            Text(mm.deserialize("当前点击次数: <aqua>$clickCount</aqua>"))
+            TextInput("msg", mm.deserialize("现在就不会丢失了"), msg) // 将初始值设置为参数
+        }
+
+        DialogType(UIType.MULTI_ACTION, columns = 2) {
+            Button(mm.deserialize("更新页面"), mm.deserialize(""), 100) { view, _ ->
+                // 先把view中的数据获取了，传递给bind复制出一个新的对象，然后再次更新其他内容
+                context.replace(bind(view).copy(clickCount = clickCount + 1))
+            }
+            // 退出与返回，这个按钮不需要使用bind，因为它本身就有丢弃当前页面的意思
+            BackButton(context)
+        }
+    }
+}
+```
+
+如果这么做，所有的按钮都需要使用 `bind(view)` 方法来先获取视图中的数据后，再更改其他值
+
+## 表单处理与值校验
+
+~~*下次再写（逃*~~
