@@ -9,6 +9,7 @@ import net.kyori.adventure.text.Component
 import xyz.axiumyu.paperDialogDsl.PaperDialogDSL.Companion.mm
 
 @PaperDialogDsl
+@SuppressWarnings("UnstableApiUsage")
 class DialogRootScope(@PublishedApi internal val entryBuilder: DialogRegistryEntry.Builder) {
 
     // DSL 上下文状态标记

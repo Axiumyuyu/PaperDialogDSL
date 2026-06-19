@@ -42,7 +42,7 @@ tasks.named<org.gradle.jvm.tasks.Jar>("jar") {
 }
 
 kotlin {
-    jvmToolchain(25)
+    jvmToolchain(21)
 }
 
 tasks {

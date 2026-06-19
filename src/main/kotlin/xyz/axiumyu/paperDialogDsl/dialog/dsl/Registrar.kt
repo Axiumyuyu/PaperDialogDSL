@@ -16,7 +16,6 @@ fun LifecycleEventManager<BootstrapContext>.registerDialog(
     block: BaseDialog
 ) {
     registerEventHandler(RegistryEvents.DIALOG.compose().newHandler { event ->
-        // 将样板代码彻底封装，直接执行外部传入的 DSL 闭包
         event.registry().register(
             DialogKeys.create(namespacedKey),
             block.buildAction
@@ -29,7 +28,6 @@ fun LifecycleEventManager<BootstrapContext>.registerCommand(
     desc: String = ""
 ) {
     registerEventHandler(LifecycleEvents.COMMANDS.newHandler { event ->
-        // 将样板代码彻底封装，直接执行外部传入的 DSL 闭包
         event.registrar().register(
             block.build(),
             desc

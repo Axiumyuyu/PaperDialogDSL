@@ -216,7 +216,7 @@ data class SettingsRoute(
     }
 
     override fun render(context: DialogRouteContext) = DialogSetup {
-        DialogContent(mm.deserialize("what's up")) {
+        DialogContent(mm.deserialize("Never gonna give you up")) {
             Text(mm.deserialize("当前点击次数: <aqua>$clickCount</aqua>"))
             TextInput("msg", mm.deserialize("现在就不会丢失了"), msg) // 将初始值设置为参数
         }
@@ -237,4 +237,50 @@ data class SettingsRoute(
 
 ## 表单处理与值校验
 
-~~*下次再写（逃*~~
+Button 内部可以使用 `validate` 方法开启一个值校验域，这相当于一个 `runCatching` 块，内部发生的所有异常都会被捕获，然后中断后续执行，转而执行传入的处理块
+
+`validate` 方法需要两个函数参数，第一个参数是当内部校验失败时，调用的方法，第二个是需要校验的内容
+
+除此之外，还可以使用扩展方法 `withError` 来指定当前位置出错或者为空时，该发送什么错误消息
+
+```kotlin
+data class EditItemBasicRoute(
+    val itemType: NameSpacedKey,
+    val errorMsg: String? = null
+) : Route {
+
+    override fun render(context: DialogRouteContext) = DialogSetup {
+
+        DialogContent(mm.deserialize("步骤 1/3：基础配置")) {
+            if (errorMsg != null) {
+                Text(mm.deserialize("<red>⚠ 校验失败: $errorMsg"))
+            } else {
+                Text(mm.deserialize("<gray>请输入你期望的自定义名称："))
+            }
+
+            TextInput("input_name", mm.deserialize("物品名称"))
+        }
+        DialogType(UIType.CONFIRMATION) {
+            Button(mm.deserialize("<gold>下一步"), mm.deserialize("配置附魔属性"), 100) { view, _ ->
+                validate({
+                    // 内部任意一行语句发生异常则调用
+                    context.replace(this@EditItemBasicRoute.copy(errorMsg = it))
+                }) {
+                    // 指定在该行发生异常或为空时的错误消息，若未发生异常且不为空则返回原本的非空类型，不需要 elvis 操作符
+                    val input = view.getText("input_name").withError("未知输入框名称")
+                    // 还可以使用 Boolean 类型判断自定义条件，当不满足条件时立刻退出，执行错误语句
+                    input.isNotEmpty().withError("名称不能为空")
+                    // 从注册表中读取物品类型，若注册表不存在（抛出异常，尽管不可能发生）或是物品未找到（返回null）都退出，执行错误语句
+                    val type = RegistryAccess.registryAccess().getRegistry(RegistryKey.ITEM)[itemType].withError("未找到该物品")
+                    // 若代码能执行到这里，type 一定是 ItemType！
+                    context.navigate(EditItemEnchantsRoute(type, input))
+                }
+            }
+
+            Button(mm.deserialize("取消"), mm.deserialize("返回主菜单"), 100) { _, _ ->
+                context.goBack()
+            }
+        }
+    }
+}
+```
